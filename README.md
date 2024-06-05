@@ -41,7 +41,7 @@ You can **get help or ask questions** on our:
 Or, you can hire us for training, consulting, or development. [Set up a free consultation](https://www.bitovi.com/services/devops-consulting).
 
 ## Pre-requisites
-- A GitHub-hosted PyPI repository. To set this up, follow the instructions in the [handler action](https://github.com/bitovi/github-actions-publish-github-pypi-handler)
+- A GitHub-hosted PyPI repository with a workflow that uses the corresponding handler action (e.g. `publish-handler.yaml`). To set this up, follow the instructions in the [handler action](https://github.com/bitovi/github-actions-publish-github-pypi-handler)
 - A GitHub repository with a Python package
 - A `pyproject.toml` file in the root of the repository
 - A GitHub token with `repo` scope added to the repository secrets
@@ -64,12 +64,10 @@ jobs:
       - name: Publish to PyPI
         uses: bitovi/github-actions-publish-github-pypi@v0.1.0
         with:
-          toml-file: 'pyproject.toml'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           pypi-github-org: 'your-github-org'
           pypi-github-repo: 'your-pypi-repo'
-          pypi-github-workflow-filename: 'publish-trigger.yaml'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          pypi-github-user: 'pypi-publisher[bot]'
+          pypi-github-workflow-filename: 'publish-handler.yaml'
 ```
 
 ## Inputs
