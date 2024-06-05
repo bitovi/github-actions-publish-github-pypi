@@ -1,0 +1,121 @@
+name: GH-PyPI-Publish
+description: 'Publishes a Python package to github-hosted PyPI'
+
+inputs:
+  pypi-github-org:
+    description: "GitHub hosted PyPI repo's org"
+    required: true
+
+  pypi-github-repo:
+    description: 'GitHub hosted PyPI repo'
+    required: true
+
+  github-token:
+    description: 'GitHub token to use for triggering the publish workflow in the PyPI repo'
+    required: true
+
+  pypi-github-user:
+    description: 'GitHub user to publish the package'
+    required: false
+    default: 'pypi-publisher[bot]'
+
+  pypi-github-workflow-filename:
+    description: 'GitHub workflow filename to trigger'
+    required: false
+    default: 'publish-trigger.yaml'
+
+  pypi-github-workflow-ref:
+    description: 'GitHub branch/ref to use when triggering the workflow'
+    required: false
+    default: 'main'
+
+  checkout:
+    description: 'Checkout the repo'
+    required: false
+    default: 'true'
+
+  # python version to use
+  python-version:
+    description: 'Python version to use'
+    required: true
+    default: '3.8'
+
+  toml-file:
+    description: 'Path to the toml file'
+    required: false
+    default: 'pyproject.toml'
+
+
+
+runs:
+  using: "composite"
+  steps:
+
+    # checkout the repo
+    - id: checkout
+      if: ${{ inputs.checkout == 'true' }}
+      name: checkout
+      uses: actions/checkout@v4
+
+
+    # build details object based on toml file
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+          python-version: ${{ inputs.python-version }}
+
+    - name: Install toml with cargo
+      shell: bash
+      run: |
+        cargo install toml-cli
+
+    - name: extract toml data
+      id: extract_toml_data
+      shell: bash
+      env:
+        TOML_FILE: ${{ inputs.toml-file }}
+        GITHUB_REF: ${{ github.ref }}
+        GITHUB_REPOSITORY_URL: ${{ github.repositoryUrl }}
+      run: |
+        echo "::group::Extract toml data"
+        toml_file="${TOML_FILE}"
+        output_object="{}"
+        if [ -f $toml_file ]; then
+            echo "Found $toml_file"
+            version=$(toml get $toml_file project.version --raw)
+            name=$(toml get $toml_file project.name --raw)
+            archive_url="${GITHUB_REPOSITORY_URL}/archive/refs/tags/${GITHUB_REF}.tar.gz"
+            output_object="{\"name\": \"$name\", \"version\": \"$version\", \"archive_url\": \"$archive_url\"}"
+        else
+            echo "No $toml_file found"
+            exit 1
+        fi
+
+        echo "output_object=${output_object}"
+        echo "output_object=${output_object}" >> $GITHUB_OUTPUT
+      
+    - name: trigger_pypi_publish
+      id: trigger_pypi_publish
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        PYPI_GITHUB_ORG: ${{ inputs.pypi-github-org }}
+        PYPI_GITHUB_REPO: ${{ inputs.pypi-github-repo }}
+        PYPI_GITHUB_USER: ${{ inputs.pypi-github-user }}
+        PYPI_GITHUB_WORKFLOW_FILENAME: ${{ inputs.pypi-github-workflow-filename }}
+        PYPI_GITHUB_WORKFLOW_REF: ${{ inputs.pypi-github-workflow-ref }}
+        output_object: ${{ steps.extract_toml_data.outputs.output_object }}
+      run: |
+        echo "::group::Trigger PyPI Publish"
+        echo "output_object=${output_object}"
+
+        # use the gh cli to trigger the workflow
+        wfn=$PYPI_GITHUB_WORKFLOW_FILENAME
+        ref=$PYPI_GITHUB_WORKFLOW_REF
+        orgrepo=$PYPI_GITHUB_ORG/$PYPI_GITHUB_REPO
+        echo "wfn=$wfn"
+        echo "ref=$ref"
+        echo "orgrepo=$orgrepo"
+        
+        echo "echo $output_object | gh workflow run $wfn -R $orgrepo --ref $ref --json"
+        echo "$output_object" | gh workflow run $wfn -R $orgrepo --ref $ref --json
