@@ -75,7 +75,7 @@ runs:
       env:
         TOML_FILE: ${{ inputs.toml-file }}
         GITHUB_REF: ${{ github.ref }}
-        GITHUB_REPOSITORY_URL: ${{ github.repositoryUrl }}
+        GITHUB_REPOSITORY_URL: "${{ github.server_url }}/${{ github.repository }}"
       run: |
         echo "::group::Extract toml data"
         toml_file="${TOML_FILE}"
