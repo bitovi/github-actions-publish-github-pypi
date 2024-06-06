@@ -85,8 +85,8 @@ runs:
             version=$(toml get $toml_file project.version --raw)
             name=$(toml get $toml_file project.name --raw)
             archive_url="${GITHUB_REPOSITORY_URL}/archive/refs/tags/${GITHUB_REF}.tar.gz"
-            archive_sha=$(curl -sL $archive_url | sha256sum | cut -d ' ' -f 1)
-            output_object="{\"name\": \"$name\", \"version\": \"$version\", \"archive_url\": \"$archive_url\", \"archive_sha\": \"$archive_sha\"}"
+            archive_sha256=$(curl -sL $archive_url | sha256sum | cut -d ' ' -f 1)
+            output_object="{\"name\": \"$name\", \"version\": \"$version\", \"archive_url\": \"$archive_url\", \"archive_sha256\": \"$archive_sha256\"}"
         else
             echo "No $toml_file found"
             exit 1
