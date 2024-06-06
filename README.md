@@ -70,6 +70,8 @@ jobs:
           pypi-github-workflow-filename: 'publish-handler.yaml'
 ```
 
+> **Important Note:** The values for your release tag should match the value of the `version` key in the `pyproject.toml` file.
+
 ## Inputs
 
 The following inputs can be used as `step.with` keys:
