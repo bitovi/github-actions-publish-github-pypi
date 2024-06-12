@@ -22,7 +22,7 @@ inputs:
   pypi-github-workflow-filename:
     description: 'GitHub workflow filename to trigger'
     required: false
-    default: 'publish-trigger.yaml'
+    default: 'handle-publish.yaml'
 
   pypi-github-workflow-ref:
     description: 'GitHub branch/ref to use when triggering the workflow'
