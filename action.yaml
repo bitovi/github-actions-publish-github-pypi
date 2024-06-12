@@ -52,6 +52,11 @@ inputs:
       For private repos, use: git+ssh://git@github.com/{{ github.repository }}.git@{{ github.ref_name }}#egg={packag_name}-{toml_version}
     required: false
 
+  archive-skip-sha:
+    description: 'Skip calculating the sha256 of the archive'
+    required: false
+    default: 'false'
+
 
 
 runs:
@@ -83,6 +88,7 @@ runs:
         TOML_FILE: ${{ inputs.toml-file }}
         GITHUB_REPOSITORY_URL: "${{ github.server_url }}/${{ github.repository }}"
         ARCHIVE_URL: ${{ inputs.archive-url }}
+        ARCHIVE_SKIP_SHA: ${{ inputs.archive-skip-sha }}
       run: |
         echo "::group::Extract toml data"
         toml_file="${TOML_FILE}"
@@ -103,7 +109,12 @@ runs:
             archive_url=$(echo $archive_url | sed "s/{packag_name}/$name/g" | sed "s/{toml_version}/$version/g")
             echo "archive_url(final)=$archive_url"
 
-            archive_sha256=$(curl -sL $archive_url | sha256sum | cut -d ' ' -f 1)
+            if [ "${ARCHIVE_SKIP_SHA}" == "true" ]; then
+              archive_sha256=""
+            else
+              archive_sha256=$(curl -sL $archive_url | sha256sum | cut -d ' ' -f 1)
+            fi
+
             output_object="{\"name\": \"$name\", \"version\": \"$version\", \"archive_url\": \"$archive_url\", \"archive_sha256\": \"$archive_sha256\"}"
         else
             echo "No $toml_file found"
