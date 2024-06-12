@@ -45,11 +45,11 @@ inputs:
     required: false
     default: 'pyproject.toml'
 
-  archive_url:
+  archive-url:
     description: |
       URL to the package archive. 
       Defaults to {{ github.server_url }}/{{ github.repository }}/archive/refs/tags/{{ github.ref_name }}.tar.gz
-      For private repos, use: git+ssh://git@github.com/{{ github.repository }}.git@{{ github.ref_name }}#egg={{ packag name }}-{{ toml version }}
+      For private repos, use: git+ssh://git@github.com/{{ github.repository }}.git@{{ github.ref_name }}#egg={packag_name}-{toml_version}
     required: false
 
 
@@ -96,7 +96,13 @@ runs:
             if [ -z "$archive_url" ]; then
               archive_url="${GITHUB_REPOSITORY_URL}/archive/refs/tags/${GITHUB_REF_NAME}.tar.gz"
             fi
-            
+
+            echo "archive_url(before)=$archive_url"
+
+            # replace {packag_name} and {toml_version} in archive_url
+            archive_url=$(echo $archive_url | sed "s/{packag_name}/$name/g" | sed "s/{toml_version}/$version/g")
+            echo "archive_url(final)=$archive_url"
+
             archive_sha256=$(curl -sL $archive_url | sha256sum | cut -d ' ' -f 1)
             output_object="{\"name\": \"$name\", \"version\": \"$version\", \"archive_url\": \"$archive_url\", \"archive_sha256\": \"$archive_sha256\"}"
         else
