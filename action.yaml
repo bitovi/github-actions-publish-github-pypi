@@ -110,11 +110,14 @@ runs:
             echo "archive_url(final)=$archive_url"
 
             if [ "${ARCHIVE_SKIP_SHA}" == "true" ]; then
+              echo "ARCHIVE_SKIP_SHA is true. Skipping sha256 calculation"
               archive_sha256=""
             else
+              echo "Calculating sha256 of $archive_url"
               archive_sha256=$(curl -sL $archive_url | sha256sum | cut -d ' ' -f 1)
             fi
 
+            echo "setting output_object"
             output_object="{\"name\": \"$name\", \"version\": \"$version\", \"archive_url\": \"$archive_url\", \"archive_sha256\": \"$archive_sha256\"}"
         else
             echo "No $toml_file found"
